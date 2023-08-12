@@ -5,6 +5,7 @@
 # Mckenna Cisler
 # mckennacisler@gmail.com
 # 1.13.2019
+from backend.AlarmUtility import SettingsAsList
 
 # Global Constants
 
@@ -12,7 +13,6 @@
 REPEAT_NUM = 50  # number of times to loop sounds
 # TODO(Arend): move to AlarmConfig
 CYCLE_ALIGNED_EARLIEST_SET_TOMMOROW = 8  # hour (24hr) of the day to switch to setting cycle-aligned alarm for the next day
-
 
 
 class AlarmType:
@@ -38,16 +38,6 @@ class GlobalSetting:
     ALARM_VOLUME = "alarm_volume"  # value is in range(100)
     SNOOZE_TIME = "snooze_time"  # value is time in seconds to snooze for
     ACTIVATION_TIMEOUT = "activation_timeout"  # value is time in seconds to wait before forcing alarm shutdown
-
-
-def SettingsAsList(cls):
-    """ Returns a list representing the values of the constants in the class `cls`."""
-    settingArr = []
-    for setting in cls.__dict__.keys():
-        if (not setting.startswith("__")):
-            settingArr.append(cls.__dict__[setting])
-    # sort return for consistency
-    return sorted(settingArr)
 
 
 def GlobalSettings():

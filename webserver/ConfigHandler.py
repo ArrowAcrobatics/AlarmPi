@@ -6,9 +6,9 @@
 # Mckenna Cisler
 # mckennacisler@gmail.com
 # 7.4.2016
+import logging
 
-from config.AlarmConfig import *
-from AlarmUtility import *
+from config.Config import GlobalConfig
 from webserver import server
 
 from tornado.web import HTTPError
@@ -39,7 +39,8 @@ class ConfigHandler(server.BaseHandler):
         """
         # ensure user is authenticated
         if not self.current_user:
-            self.logError("User must authenticate before changing configuration")
+            logging.error("User must authenticate before changing configuration")
+            raise HTTPError(400, "User must authenticate before changing configuration")
             self.redirect("/login")
             return
 
@@ -99,7 +100,8 @@ class ConfigHandler(server.BaseHandler):
                     else:
                         # only warn if not empty
                         if (alarmType):
-                            self.logError("Invalid alarm type specified in request to ConfigHandler (/config)")
+                            logging.error("Invalid alarm type specified in request to ConfigHandler (/config)")
+                            raise HTTPError(400, "Invalid alarm type specified in request to ConfigHandler (/config)")
 
                     if (subType):
                         self.config.setDailySetting(day, DailySetting.ALARM_SUBTYPE, subType)
@@ -120,7 +122,9 @@ class ConfigHandler(server.BaseHandler):
                             self.config.setTime(time, day)
                             logStr += "alarm time to %s, " % timeStr
                         except ValueError as e:
-                            self.logError("Invalid time specified in request to ConfigHandler (/config): %s" % e)
+                            error = "Invalid time specified in request to ConfigHandler (/config): %s" % e
+                            logging.error(error)
+                            raise HTTPError(400, error)
 
                     # set any other settings
                     for settingName, settingValue in otherSettings.items():
@@ -129,9 +133,11 @@ class ConfigHandler(server.BaseHandler):
 
                     log(logStr)
                 else:
-                    self.logError("Malformed alarm set request sent to ConfigHandler (/config)")
+                    logging.error("Malformed alarm set request sent to ConfigHandler (/config)")
+                    raise HTTPError(400, "Malformed alarm set request sent to ConfigHandler (/config)")
             else:
-                self.logError("Invalid day specified in request to ConfigHandler (/config)")
+                logging.error("Invalid day specified in request to ConfigHandler (/config)")
+                raise HTTPError(400, "Invalid day specified in request to ConfigHandler (/config)")
         else:
             # try to set all possible daily settings for every day ONLY IF
             # a specific day is not being set
@@ -152,11 +158,9 @@ class ConfigHandler(server.BaseHandler):
     def get(self):
         # just send the JSON of the config file (if we can)
         try:
-            with open(CONFIG_FILE, "r") as configF:
+            with open(GlobalConfig.CONFIG_FILE, "r") as configF:
                 self.write(configF.read())
-        except IOError, ValueError:
-            raise HTTPError(500, "Could not open configuration file at " + CONFIG_FILE)
-
-    def logError(self, error):
-        log(error)
-        raise HTTPError(400, error)
+        except IOError as e:
+            raise HTTPError(500, "Could not open configuration file at " + GlobalConfig.CONFIG_FILE)
+        except ValueError as e:
+            raise HTTPError(500, "Could not open configuration file at " + GlobalConfig.CONFIG_FILE)

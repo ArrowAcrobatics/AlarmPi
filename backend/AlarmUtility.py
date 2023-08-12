@@ -7,42 +7,9 @@
 # mckennacisler@gmail.com
 # 7.4.2016
 
-import subprocess as sub
-import urllib, urllib.request
 import json
-
-
-from config.AlarmDate import Day
-
-
-def getDayFromNum(dayNum):
-    if (dayNum == 0): return Day.MON
-    if (dayNum == 1): return Day.TUES
-    if (dayNum == 2): return Day.WED
-    if (dayNum == 3): return Day.THURS
-    if (dayNum == 4): return Day.FRI
-    if (dayNum == 5): return Day.SAT
-    if (dayNum == 6): return Day.SUN
-
-
-def getNumFromDay(day):
-    if (day == Day.MON):    return 0
-    if (day == Day.TUES):    return 1
-    if (day == Day.WED):    return 2
-    if (day == Day.THURS):    return 3
-    if (day == Day.FRI):    return 4
-    if (day == Day.SAT):    return 5
-    if (day == Day.SUN):    return 6
-
-
-def getFullDayName(day):
-    if (day == Day.MON):    return "Monday"
-    if (day == Day.TUES):    return "Tuesday"
-    if (day == Day.WED):    return "Wednesday"
-    if (day == Day.THURS):    return "Thursday"
-    if (day == Day.FRI):    return "Friday"
-    if (day == Day.SAT):    return "Saturday"
-    if (day == Day.SUN):    return "Sunday"
+import urllib
+import urllib.request
 
 
 def getPrettyName(setting):
@@ -54,22 +21,20 @@ def getPrettyName(setting):
     return result[:len(result) - 1]  # remove space
 
 
-# Functions for returning arrays of constants
-def Days():
-    dayArr = []
-    for day in Day.__dict__.keys():
-        if (not day.startswith("__")):
-            dayArr.append(Day.__dict__[day])
-    # sort return for consistency (in week order with mon at start)
-    return sorted(dayArr, key=getNumFromDay)
+def SettingsAsList(cls, sortkey=None):
+    """ Returns a list representing the values of the constants in the class `cls`."""
+    settingArr = []
+    for setting in cls.__dict__.keys():
+        if (not setting.startswith("__")):
+            settingArr.append(cls.__dict__[setting])
+    # sort return for consistency
+    return sorted(settingArr, key=sortkey)
 
-
-
-
-def setVolume(vol):
-    # TODO(Arend): move to AlarmActivator as it can be done through vlc
-    """ Sets volume to full where vol==100, so vol is in range(100) """
-    sub.call(["amixer", "cset", "numid=1", str(vol) + "%"])
+def getJSON(url, values):
+    params = urllib.urlencode(values)
+    req = urllib.request.Request(url, params)
+    response = urllib.request.urlopen(req)
+    return json.loads(response.read())
 
 
 # def speak(string):
@@ -122,14 +87,6 @@ def setVolume(vol):
 #         # then pipe it to aplay to fix bitrate issue
 #         sub.call(["aplay"], stdin=espeak_ps.stdout)
 #         """
-
-
-def getJSON(url, values):
-    params = urllib.urlencode(values)
-    req = urllib.request.Request(url, params)
-    response = urllib.request.urlopen(req)
-    return json.loads(response.read())
-
 
 if __name__ == "__main__":
     speak("Hello, world")
