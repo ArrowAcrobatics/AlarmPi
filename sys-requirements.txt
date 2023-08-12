@@ -1,7 +1,6 @@
 python-tornado
 python-daemon
 python-beautifulsoup
-pianobar
 aplay
 espeak
 sox

@@ -28,7 +28,7 @@ from AlarmReporting import *
 class AlarmPi:
     def __init__(self):
         # CONSTANTS
-        self.CHECK_INTERVAL = 30 if DEBUG else 60 # in seconds, <= 60
+        self.CHECK_INTERVAL = 30 if DEBUG else 60  # in seconds, <= 60
         self.TIME_TOLERANCE = 2  # distance off time that's considered on time (s)
 
         # UTILIZED OBJECTS AND VARIABLES
@@ -38,11 +38,9 @@ class AlarmPi:
 
         self.snoozedAlarmTime = None
 
-        self.run()
-
     def run(self):
         # start listener to automatically setup alarm aligned to user's sleep cycle
-        AlarmCycleAlignment(self.userInput, self.config)
+        alignment = AlarmCycleAlignment(self.userInput, self.config)
 
         log("Started AlarmPi daemon")
 
@@ -68,17 +66,17 @@ class AlarmPi:
                             self.config.getState(curDay) and \
                             self.currentlyAtTime(self.config.getTime(curDay)):
 
-                            self.config.setCycleAlignedTime(None, day=curDay)
+                        self.config.setCycleAlignedTime(None, day=curDay)
 
-                            self.reporting.enableHandlers()  # re-enable auxiliary handlers (briefly)
-                            self.waitForNextCheck()
-                            continue
+                        self.reporting.enableHandlers()  # re-enable auxiliary handlers (briefly)
+                        self.waitForNextCheck()
+                        continue
                     # if an ACTIVE normal alarm time (or one overwritten by snooze) is after this cycle-alarm, ignore it but don't remove the cycle-aligned
                     # (that normal alarm will be caught above and the cycle-aligned will be deactivated)
                     # Continue with setting off the cycle-aligned alarm
                     elif self.config.getState(curDay) and \
-                                    ((self.config.getTime(curDay) if not self.snoozedAlarmTime else self.snoozedAlarmTime)
-                                         - cycleAlignedTime).total_seconds() > 0:
+                            ((self.config.getTime(curDay) if not self.snoozedAlarmTime else self.snoozedAlarmTime)
+                             - cycleAlignedTime).total_seconds() > 0:
                         pass
                     # if the normal one won't go off after, simply deactivate the cycle-aligned
                     # and continue with setting it off
@@ -92,10 +90,10 @@ class AlarmPi:
                 alarm.activate()
 
                 log("Activating alarm on %s at %s; playing %s: '%s'" % (curDay, alarmStart,
-                                                                       self.config.getDailySetting(curDay,
-                                                                                                   DailySetting.ALARM_TYPE),
-                                                                       self.config.getDailySetting(curDay,
-                                                                                                   DailySetting.ALARM_SUBTYPE)))
+                                                                        self.config.getDailySetting(curDay,
+                                                                                                    DailySetting.ALARM_TYPE),
+                                                                        self.config.getDailySetting(curDay,
+                                                                                                    DailySetting.ALARM_SUBTYPE)))
 
                 # break in certain cases
                 while True:
@@ -120,7 +118,7 @@ class AlarmPi:
                         break
 
                     elif ((datetime.datetime.today() - alarmStart).total_seconds() >=
-                              self.config.getGlobalSetting(GlobalSetting.ACTIVATION_TIMEOUT)):
+                          self.config.getGlobalSetting(GlobalSetting.ACTIVATION_TIMEOUT)):
                         log("Alarm timed out")
                         break
 
@@ -130,7 +128,7 @@ class AlarmPi:
                 # deactivate once either a deactivate button is pressed
                 # or the alarm times out
                 alarm.deactivate()
-                self.reporting.enableHandlers() # re-enable auxiliary handlers
+                self.reporting.enableHandlers()  # re-enable auxiliary handlers
 
             self.waitForNextCheck()
 
@@ -142,7 +140,7 @@ class AlarmPi:
         if DEBUG: log("Checked the proximity of %s to %s" % (curTime, targetTime))
 
         return abs(targetTime - curTime).total_seconds() < \
-               datetime.timedelta(seconds=self.TIME_TOLERANCE).total_seconds()
+            datetime.timedelta(seconds=self.TIME_TOLERANCE).total_seconds()
 
     def getCurDay(self):
         dayNum = datetime.datetime.today().weekday()
@@ -158,4 +156,5 @@ class AlarmPi:
 if __name__ == "__main__":
     logFile = open(LOGFILE, "a")
     with daemon.DaemonContext(working_directory=ROOT_DIRECTORY + "/backend", stdout=logFile, stderr=logFile):
-    	AlarmPi()
+        alarmpi = AlarmPi()
+        alarmpi.run()

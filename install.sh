@@ -21,7 +21,7 @@ fi
 # install dependencies
 while read line; do
 	sudo apt-get -y install $line
-done <requirements.txt
+done <sys-requirements.txt
 
 # setup fifo for controlling pianobar
 mkdir -p ~/.config/pianobar 

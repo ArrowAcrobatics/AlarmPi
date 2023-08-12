@@ -19,7 +19,9 @@ class AlarmInput():
         self.ALERT_PIN = 40
         self.ALERT_CYCLE_FREQ = 25 # ms
         self.DEBOUNCE_DELAY = 2000 # ms
-        self.SUBSEQUENT_CALLBACK_IGNORE_NUM = 10 # max number of callback activations to push off the queue after one activation
+
+        # max number of callback activations to push off the queue after one activation
+        self.SUBSEQUENT_CALLBACK_IGNORE_NUM = 10
 
         # Setup GPIO
         GPIO.setmode(GPIO.BOARD)
@@ -85,8 +87,8 @@ class AlarmInput():
             self.deactivatePressed()
             self.sleepNowPressed()
 
-    # this is run as a handler under RPi.GPIO, so needs an extra argument
     def feedback(self, _):
+        # this is run as a handler under RPi.GPIO, so needs an extra argument
         self.alert(self.ALERT_CYCLE_FREQ)
         self.clearHandlers()
 

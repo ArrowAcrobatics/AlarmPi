@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="995e27f2-e839-4284-9fa1-7217340d808c" name="alarmpi.local">
+        <fileTransfer accessType="SFTP" host="alarmpi" port="22" sshConfigId="b879ec6e-bed4-42ae-bb29-9b7421e86f5b" sshConfig="super@alarmpi:22 key" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" isUseRsync="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
