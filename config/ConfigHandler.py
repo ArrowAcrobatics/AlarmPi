@@ -7,12 +7,10 @@
 # mckennacisler@gmail.com
 # 7.4.2016
 
-from AlarmConstants import *
-from AlarmConfig import *
+from config.AlarmConfig import *
 from AlarmUtility import *
-import server
+from webserver import server
 
-import tornado
 from tornado.web import HTTPError
 
 

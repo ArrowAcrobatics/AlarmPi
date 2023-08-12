@@ -6,67 +6,52 @@
 # Mckenna Cisler
 # mckennacisler@gmail.com
 # 1.13.2019
+import subprocess
 
-import subprocess as sub
-import os
-import os.path
-from AlarmConstants import *
-from AlarmConfig import *
+from config.AlarmConstants import DailySetting, REPEAT_NUM, AlarmType
+from config.Config import GlobalConfig
+
+import asyncio
 
 
-class AlarmActivator():
-    def __init__(self, config, day):
-        self.alarmType = config.getDailySetting(day, DailySetting.ALARM_TYPE)
-        self.subType = config.getDailySetting(day, DailySetting.ALARM_SUBTYPE)
-        self.pandoraEmail = config.getGlobalSetting(GlobalSetting.PANDORA_EMAIL)
-        self.pandoraPass = config.getGlobalSetting(GlobalSetting.PANDORA_PASS)
+class AlarmActivator:
+    """ TODO(Arend): implement VLC backend"""
+
+    def __init__(self, day):
+        self.alarmType = GlobalConfig.alarm.getDailySetting(day, DailySetting.ALARM_TYPE)
+        self.subType = GlobalConfig.alarm.getDailySetting(day, DailySetting.ALARM_SUBTYPE)
+
         self._soundProcess = None
 
-        # ensure set on headphone jack
-        if AUTO_SET_AUDIO_DEVICE:
-            sub.call(["amixer", "cset", "numid=3", "1"])
-
-    def activate(self):
-        if (self._soundProcess != None):
+    async def activate(self):
+        if self._soundProcess is not None:
             self._soundProcess.kill()
 
-        if (self.alarmType == AlarmType.SOUND):
-            self._activateSound(self.subType)
-        elif (self.alarmType == AlarmType.PANDORA):
-            self._activatePandora(self.subType)
+        startplaylistcmd = f"vlc {GlobalConfig.audio.SOUNDS_DIRECTORY}/Neon.wav"
+        print(startplaylistcmd)
+        self._soundProcess = await asyncio.create_subprocess_shell(
+            startplaylistcmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
 
     def _activateSound(self, sound):
-        self._soundProcess = sub.Popen(["play", SOUNDS_DIRECTORY + sound + SOUND_FILE_EXT, "repeat", str(REPEAT_NUM)])
-        # stdout=(None if DEBUG else sub.PIPE)
-
-    # TODO: Check if successful
-
-    def _activatePandora(self, station):
-        # make sure that pianobar's automatic station selection is not set (it's set in this file)
-        if (os.path.isfile(PIANOBAR_STATE_FILE)):
-            os.remove(PIANOBAR_STATE_FILE)
-
-        # start pianobar
-        self._soundProcess = sub.Popen(["pianobar"])
-        # stdout=(None if DEBUG else sub.PIPE)
-
-        # open FIFO to send data to pianobar - see http://linux.die.net/man/1/pianobar under "Remote Control"
-        with open(PIANOBAR_FIFO, "w") as fifoInput:
-            fifoInput.write(self.pandoraEmail + "\n")
-            fifoInput.write(self.pandoraPass + "\n")
-            fifoInput.write(station + "\n")
+        self._soundProcess = sub.Popen(
+            ["play", GlobalConfig.audio.SOUNDS_DIRECTORY + sound + SOUND_FILE_EXT, "repeat", str(REPEAT_NUM)])
         # TODO: Check if successful
 
-    def deactivate(self):
-        if (self._soundProcess != None):
+    async def deactivate(self):
+        if self._soundProcess != None:
             self._soundProcess.kill()
 
 
 if __name__ == "__main__":
     import time
+    async def main():
+        activator = AlarmActivator('thurs')
+        await activator.activate()
+        await asyncio.sleep(5)
+        await activator.deactivate()
 
-    test = AlarmActivator(AlarmConfig('../alarm-config.json'),'thurs')
-    print test.subType
-    test.activate()
-    time.sleep(5)
-    test.deactivate()
+    asyncio.get_event_loop().run_until_complete(main())
+

@@ -9,7 +9,6 @@
 # 7.4.2016
 
 import datetime
-from AlarmConstants import *
 from AlarmUtility import *
 
 class AlarmCycleAlignment():

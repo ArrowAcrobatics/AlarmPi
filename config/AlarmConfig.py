@@ -9,20 +9,21 @@
 # 7.4.2016
 
 import datetime
-import json
-from AlarmConstants import *
-from AlarmUtility import *
+import logging
+
+from backend.AlarmUtility import *
+from config.AlarmConstants import GlobalSetting, GlobalSettings, DailySetting, AlarmType, DailySettings
 
 
-class AlarmConfig():
-    def __init__(self, filename):
+class AlarmConfig:
+    def __init__(self, alarmconfigpath):
         # CONSTANTS
         self.BACKUP_FILE_SUFFIX = "~"
 
-        self.filename = filename
+        self.filename = alarmconfigpath
         self._fileCache = {}
 
-        # make sure we have a valid cached config, and backup file in case
+        # Initialize config cache, and backup file
         self._cacheConfig()
         self._backupConfig()
 
@@ -154,9 +155,12 @@ class AlarmConfig():
         for setting in GlobalSettings():
             # set particular defaults for particular settings
             default = '""'
-            if setting == GlobalSetting.ACTIVATION_TIMEOUT: default = 15 * 60 # seconds
-            elif setting == GlobalSetting.ALARM_VOLUME: default = 100
-            elif setting == GlobalSetting.SNOOZE_TIME: default = 10 * 60 # seconds
+            if setting == GlobalSetting.ACTIVATION_TIMEOUT:
+                default = 15 * 60  # seconds
+            elif setting == GlobalSetting.ALARM_VOLUME:
+                default = 100
+            elif setting == GlobalSetting.SNOOZE_TIME:
+                default = 10 * 60  # seconds
 
             jsonText += '"%s":%s,' % (setting, default)
 
@@ -168,11 +172,15 @@ class AlarmConfig():
             for setting in DailySettings():
                 # set particular defaults for particular settings
                 default = '""'
-                if setting == DailySetting.MAX_OVERSLEEP: default = 15 * 60  # seconds
-                elif setting == DailySetting.TIME_TO_SLEEP: default = 14 * 60   # seconds; average human time
-                                                                                # according to http://sleepyti.me
-                elif setting == DailySetting.DESIRED_SLEEP_TIME: default = 0
-                elif setting == DailySetting.ALARM_TYPE: default = '"' + AlarmType.SOUND + '"'
+                if setting == DailySetting.MAX_OVERSLEEP:
+                    default = 15 * 60  # seconds
+                elif setting == DailySetting.TIME_TO_SLEEP:
+                    default = 14 * 60  # seconds; average human time
+                # according to http://sleepyti.me
+                elif setting == DailySetting.DESIRED_SLEEP_TIME:
+                    default = 0
+                elif setting == DailySetting.ALARM_TYPE:
+                    default = '"' + AlarmType.SOUND + '"'
 
                 jsonText += ', "%s":%s' % (setting, default)
 
@@ -187,25 +195,27 @@ class AlarmConfig():
         self._fileCache = json.loads(jsonText)
 
     def _cacheConfig(self):
+        """ Pulls up a fresh copy of config from disk. Generates a new one on failure."""
         try:
             with open(self.filename, "r") as inputF:
                 self._fileCache = json.loads(inputF.read())
         except IOError:
-            log("Configuration file not found, generating a new one.")
+            logging.debug("Configuration file not found, generating a new one.")
             self._generateNewConfig()
         except ValueError:
-            log("Configuration file not readable, generating a new one.")
+            logging.debug("Configuration file not readable, generating a new one.")
             self._generateNewConfig()
 
-
     def _updateConfig(self):
+        """ Writes config to disk. """
         with open(self.filename, "w") as outputF:
             outputF.write(json.dumps(self._fileCache, sort_keys=True,
                                      indent=4, separators=(',', ': ')))
 
     def _backupConfig(self):
+        """ Writes a fresh backup file based on the contents of self.filename. """
         with open(self.filename, "r") as inputF:
-            with open(self.filename + self.BACKUP_FILE_SUFFIX, "w") as outputF:
+            with open(f"{self.filename}{self.BACKUP_FILE_SUFFIX}", "w") as outputF:
                 outputF.write(inputF.read())
 
 

@@ -11,14 +11,7 @@
 # mckennacisler@gmail.com
 # 7.4.2016
 
-import subprocess as sub
 import daemon
-import time
-import os
-import datetime
-from AlarmConstants import *
-from AlarmConfig import *
-from AlarmUtility import *
 from AlarmInput import *
 from AlarmActivator import *
 from AlarmCycleAlignment import *
@@ -26,13 +19,15 @@ from AlarmReporting import *
 
 
 class AlarmPi:
-    def __init__(self):
+    def __init__(self, debug=False):
+        self.debug = debug
+
         # CONSTANTS
-        self.CHECK_INTERVAL = 30 if DEBUG else 60  # in seconds, <= 60
+        self.CHECK_INTERVAL = 30 if self.debug else 60  # in seconds, <= 60
         self.TIME_TOLERANCE = 2  # distance off time that's considered on time (s)
 
         # UTILIZED OBJECTS AND VARIABLES
-        self.config = AlarmConfig(CONFIG_FILE)
+        self.config = GlobalConfig.alarm
         self.userInput = AlarmInput()
         self.reporting = AlarmReporting(self.userInput)  # start various reporting capabilites
 
@@ -137,7 +132,8 @@ class AlarmPi:
 
         curTime = datetime.datetime.today()
 
-        if DEBUG: log("Checked the proximity of %s to %s" % (curTime, targetTime))
+        if self.debug:
+            log("Checked the proximity of %s to %s" % (curTime, targetTime))
 
         return abs(targetTime - curTime).total_seconds() < \
             datetime.timedelta(seconds=self.TIME_TOLERANCE).total_seconds()

@@ -10,16 +10,15 @@
 # 1.13.2019
 
 import daemon
-import os
 import hashlib
 import random
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
-from ConfigHandler import *
-from AlarmConstants import *
-from AlarmConfig import *
+from config.ConfigHandler import *
+from config.AlarmConfig import *
 import UIModules
+from backend.AlarmUtility import log
 
 # CONSTANTS
 LISTEN_PORT = 8888
@@ -29,10 +28,12 @@ LOGIN_PASSWORD_HASH = "0127ce4151c7694e87b9e50e71049ebbf39302de88dc6ed72be8e5ae2
 # Globals (Sorry, they're needed for the MainHandler)
 config = AlarmConfig(CONFIG_FILE)
 
+
 # create base handler to override get_current_user to allow authentication
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
         return self.get_secure_cookie("user")
+
 
 class MainHandler(BaseHandler):
     def get(self):
@@ -49,6 +50,7 @@ class MainHandler(BaseHandler):
                     getFullDayName=getFullDayName,
                     getPrettyName=getPrettyName)
 
+
 class LoginHandler(BaseHandler):
     def get(self):
         self.render("login.html", message=None)
@@ -63,7 +65,9 @@ class LoginHandler(BaseHandler):
             self.render("login.html",
                         message="Incorrect password")
 
+
 def make_app(config):
+    """ Sets up a tornado web application for AlarmPi and returns it. """
     return tornado.web.Application([
         (r"/", MainHandler),
         (r"/login", LoginHandler),
@@ -74,18 +78,15 @@ def make_app(config):
         template_path=WEB_ROOT,
         ui_modules=UIModules,
         debug=DEBUG,
-        cookie_secret = str(os.urandom(24))
+        cookie_secret=str(os.urandom(24))
     )
-
-def main():
-    app = make_app(config)
-    http_server = tornado.httpserver.HTTPServer(app)
-    http_server.listen(LISTEN_PORT)
-    log("Starting webserver at localhost:%d" % LISTEN_PORT)
-    tornado.ioloop.IOLoop.instance().start()
 
 
 if __name__ == "__main__":
     logFile = open(LOGFILE, "a")
     with daemon.DaemonContext(working_directory=ROOT_DIRECTORY + "/backend", stdout=logFile, stderr=logFile):
-        main()
+        app = make_app(config)
+        http_server = tornado.httpserver.HTTPServer(app)
+        http_server.listen(LISTEN_PORT)
+        log("Starting webserver at localhost:%d" % LISTEN_PORT)
+        tornado.ioloop.IOLoop.instance().start()

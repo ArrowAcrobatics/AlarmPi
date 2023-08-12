@@ -7,14 +7,12 @@
 # mckennacisler@gmail.com
 # 7.4.2016
 
-import time
 import subprocess as sub
-import urllib, urllib2
+import urllib, urllib.request
 import json
-from BeautifulSoup import BeautifulSoup
-from os import listdir
-from os.path import isfile, join
-from AlarmConstants import *
+
+
+from config.AlarmDate import Day
 
 
 def getDayFromNum(dayNum):
@@ -66,101 +64,72 @@ def Days():
     return sorted(dayArr, key=getNumFromDay)
 
 
-def DailySettings():
-    settingArr = []
-    for setting in DailySetting.__dict__.keys():
-        if (not setting.startswith("__")):
-            settingArr.append(DailySetting.__dict__[setting])
-    # sort return for consistency
-    return sorted(settingArr)
-
-
-def GlobalSettings():
-    settingArr = []
-    for setting in GlobalSetting.__dict__.keys():
-        if (not setting.startswith("__")):
-            settingArr.append(GlobalSetting.__dict__[setting])
-    # sort return for consistency
-    return sorted(settingArr)
-
-
-def Sounds():
-    """ Returns all the filenames (sound IDs for this program) of the sounds in the /sounds folder.
-	While not techinally returning an array of constants, represents a series of constants. 
-	Adapted from http://stackoverflow.com/a/3207973/3155372 """
-    return [f[:f.rindex(".")] for f in listdir(SOUNDS_DIRECTORY) if isfile(join(SOUNDS_DIRECTORY, f))]  # Communications
 
 
 def setVolume(vol):
+    # TODO(Arend): move to AlarmActivator as it can be done through vlc
     """ Sets volume to full where vol==100, so vol is in range(100) """
     sub.call(["amixer", "cset", "numid=1", str(vol) + "%"])
 
-def speak(string):
-    log("SPEAKING: " + string)
 
-    setVolume(SPEECH_VOLUME)
-
-    if (YAKITTOME_API_KEY != ""):
-        # send request to get audio from YAKItToMe
-        # resources:
-        # https://www.yakitome.com/documentation/tts_api#markmin_tts
-        # https://docs.python.org/2/library/urllib.html#urllib.urlretrieve
-
-        # get the book id, which allows us to get the audio file
-        valuesTTS = dict(
-            api_key=YAKITTOME_API_KEY,
-            voice=YAKITTOME_SPEECH_VOICE,
-            speed=YAKITTOME_SPEECH_SPEED,
-            text=string)
-        jsonTTSResponse = getJSON("http://www.yakitome.com/api/rest/tts", valuesTTS)
-        bookID = jsonTTSResponse['book_id']
-
-        # get the url of the relevant audio file
-        valuesAudio = dict(
-            api_key=YAKITTOME_API_KEY,
-            book_id=bookID,
-            format="ogg")
-        jsonAudioResponse = getJSON("http://www.yakitome.com/api/rest/audio", valuesAudio)
-        fileURL = jsonAudioResponse["audios"][0]
-
-        # download file and play it
-        location = u"/tmp/" + fileURL[fileURL.rindex("/"):]
-        log("Downloading + playing file " + location)
-        sub.call(["wget", "--output-document=%s" % location, fileURL])
-        sub.call(["play", location, "&"])
-
-    else:
-        location = "/tmp/" + str(time.time()) + ".wav"
-        sub.call(["pico2wave", "-l=en-US", "-w=%s" % location, string])
-        sub.call(["aplay", location])
-
-        """
-        # call espeak to get audio data
-        espeak_ps = sub.Popen(["espeak", '"' + string + '"',
-                               "--stdout",
-                               "-s", str(ESPEAK_SPEECH_SPEED),
-                               "-v", ESPEAK_SPEECH_VOICE],
-                              stdout=sub.PIPE)
-
-        # then pipe it to aplay to fix bitrate issue
-        sub.call(["aplay"], stdin=espeak_ps.stdout)
-        """
+# def speak(string):
+#     log("SPEAKING: " + string)
+#
+#     setVolume(SPEECH_VOLUME)
+#
+#     if (YAKITTOME_API_KEY != ""):
+#         # send request to get audio from YAKItToMe
+#         # resources:
+#         # https://www.yakitome.com/documentation/tts_api#markmin_tts
+#         # https://docs.python.org/2/library/urllib.html#urllib.urlretrieve
+#
+#         # get the book id, which allows us to get the audio file
+#         valuesTTS = dict(
+#             api_key=YAKITTOME_API_KEY,
+#             voice=YAKITTOME_SPEECH_VOICE,
+#             speed=YAKITTOME_SPEECH_SPEED,
+#             text=string)
+#         jsonTTSResponse = getJSON("http://www.yakitome.com/api/rest/tts", valuesTTS)
+#         bookID = jsonTTSResponse['book_id']
+#
+#         # get the url of the relevant audio file
+#         valuesAudio = dict(
+#             api_key=YAKITTOME_API_KEY,
+#             book_id=bookID,
+#             format="ogg")
+#         jsonAudioResponse = getJSON("http://www.yakitome.com/api/rest/audio", valuesAudio)
+#         fileURL = jsonAudioResponse["audios"][0]
+#
+#         # download file and play it
+#         location = u"/tmp/" + fileURL[fileURL.rindex("/"):]
+#         log("Downloading + playing file " + location)
+#         sub.call(["wget", "--output-document=%s" % location, fileURL])
+#         sub.call(["play", location, "&"])
+#
+#     else:
+#         location = "/tmp/" + str(time.time()) + ".wav"
+#         sub.call(["pico2wave", "-l=en-US", "-w=%s" % location, string])
+#         sub.call(["aplay", location])
+#
+#         """
+#         # call espeak to get audio data
+#         espeak_ps = sub.Popen(["espeak", '"' + string + '"',
+#                                "--stdout",
+#                                "-s", str(ESPEAK_SPEECH_SPEED),
+#                                "-v", ESPEAK_SPEECH_VOICE],
+#                               stdout=sub.PIPE)
+#
+#         # then pipe it to aplay to fix bitrate issue
+#         sub.call(["aplay"], stdin=espeak_ps.stdout)
+#         """
 
 
 def getJSON(url, values):
     params = urllib.urlencode(values)
-    req = urllib2.Request(url, params)
-    response = urllib2.urlopen(req)
+    req = urllib.request.Request(url, params)
+    response = urllib.request.urlopen(req)
     return json.loads(response.read())
 
-def log(string):
-    # add timestamp and newline
-    string = "\n" + time.strftime("%c") + ": " + str(string) + "\n"
-
-    with open(LOGFILE, "a") as f:
-        f.write(string)
-
-    if DEBUG: print string
 
 if __name__ == "__main__":
     speak("Hello, world")
