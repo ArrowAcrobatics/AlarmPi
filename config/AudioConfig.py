@@ -7,6 +7,7 @@ class AudioConfig:
         self.SOUNDS_DIRECTORY = rootdirpath/"sounds"
         self.SOUND_FILE_EXT = ".wav"
         self.auto_set_audio_device = True
+        self.ALARM_VOLUME = 80
 
         self.SPEECH_VOLUME = 80  # percent
         self.ESPEAK_SPEECH_VOICE = "en+m3"  # en+f4 # see http://espeak.sourceforge.net/languages.html

@@ -13,7 +13,7 @@
 
 import daemon
 from AlarmInput import *
-from AlarmActivator import *
+from alarm.AlarmActivator import *
 from AlarmCycleAlignment import *
 from AlarmReporting import *
 
@@ -81,7 +81,6 @@ class AlarmPi:
                 alarmStart = datetime.datetime.today()
 
                 alarm = AlarmActivator(self.config, curDay)
-                setVolume(self.config.getGlobalSetting(GlobalSetting.ALARM_VOLUME))
                 alarm.activate()
 
                 log("Activating alarm on %s at %s; playing %s: '%s'" % (curDay, alarmStart,
